@@ -8,8 +8,33 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v6
+    env:
+      CHANNEL_ACCESS_TOKEN: ${{ secrets.CHANNEL_ACCESS_TOKEN }}
 
-      - name: Run a one-line script
-        run: echo Hello World!
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with: 
+          go-version: '1.23'
+          cache: true
+      
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.61
+
+      - name: Run Test
+        run: go test -v ./...
+
+      - name: Run build
+        run: go build ./cmd/main.go
+
+      - name: Notify
+        if: ${{ success() }}
+        run: ./main
